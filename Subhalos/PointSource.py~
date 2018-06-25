@@ -19,6 +19,8 @@ r_vir = 213.5 # r200 for MW in [kpc] (taken from 1606.04898)
 
 # Parameters for MW NFW profile                                                                      
 rho_c = 3*H0**2/(8*np.pi*G)*1e10*units.M_s/units.kpc**3  # Critical density in [1e10*M_s/kpc**3]       
+print(rho_c)
+print(1.8788e-26*units.h**2*units.Kilogram/units.Meter**3)
 class PointSource():
     def __init__(self, Mvir, Rvir, theta, phi):
         self.Mvir = Mvir*units.M_s
