@@ -1,0 +1,10 @@
+#!/bin/bash
+#SBATCH -N 1   # node count
+##SBATCH --ntasks-per-node=5
+#SBATCH -t 23:00:00
+#SBATCH --mem=100GB
+##SBATCH --mail-type=begin
+##SBATCH --mail-type=end
+##SBATCH --mail-user=somalwar@princeton.edu
+#SBATCH --output=slurm/slurmResPower_10-15_1e-25T.out
+python ResolvingPower.py True
