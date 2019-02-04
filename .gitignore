@@ -4,4 +4,4 @@
 */chains/*
 *.pyc
 *.png
-*.ipynb_checkpoints*
+*/.ipynb_checkpoints/*
