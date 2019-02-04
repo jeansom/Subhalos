@@ -40,7 +40,6 @@ for x in x_a:
         for i in range(n_iters+1):
             nsubs = (i==n_iters)*n_ex + (i!=n_iters)*n_max
             if nsubs==0: continue
-            print(nsubs)
             batchn = copy.copy(batch)
             batchn += "#SBATCH --output=slurm/slurm.out\n"
             batchn += " python /tigress/somalwar/SubhalosFresh/Code/nbArgs.py MakeSubhaloMC.ipynb \"{'xsec': "+str(x)+", 'nsubs': "+str(nsubs)+", 'trial': "+str(t)+", 'iter': "+str(i)+", 'mass': "+str(mass)+"}\" "
