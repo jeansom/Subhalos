@@ -2,3 +2,5 @@
 *.npz
 *.out
 */chains/*
+*.pyc
+*.png

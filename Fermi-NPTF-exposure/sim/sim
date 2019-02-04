@@ -1,0 +1,24 @@
+import sys, os
+
+# current_dir = os.getcwd()
+# change_path = ".."
+# os.chdir(change_path)
+os.chdir('/Users/bsafdi/Dropbox (Personal)/Edep-NPTF/github/python')
+
+import numpy as np
+from numpy.random import random_sample
+import scipy
+import matplotlib
+import matplotlib.pyplot as plt
+
+import healpy as hp
+import mpmath as mp
+from astropy.io import fits
+
+import logging
+from contextlib import contextmanager
+import sys, os
+
+from scipy import integrate, interpolate
+
+from config.make_NFW import make_NFW
