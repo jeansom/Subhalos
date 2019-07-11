@@ -19,9 +19,7 @@ r_vir = 213.5 # r200 for MW in [kpc] (taken from 1606.04898)
 
 # Parameters for MW NFW profile                                                                      
 rho_c = 3*H0**2/(8*np.pi*G)*1e10*units.M_s/units.kpc**3  # Critical density in [1e10*M_s/kpc**3] 
-print(rho_c)
-print(units.M_s)
-print(units.h)
+
 class PointSource():
     def __init__(self, Mvir, Rvir, theta, phi):
         self.Mvir = Mvir*units.M_s
@@ -40,6 +38,7 @@ class PointSource():
         if conc == "SP": self.conc = self.c200_SP
         elif conc == "S": self.conc = self.c200_S
         self.J = self.PSJ_int()/(self.coord.distance*units.kpc)**2 / (units.GeV**2/units.Centimeter**5)
+        self.J = self.J.value
 
     def PSJ_int( self ):
         #rho_c = 1.8788e-26*units.h**2*units.Kilogram/units.Meter**3
@@ -48,15 +47,10 @@ class PointSource():
         self.r_s = self.r200/self.c
         nfw_func = np.log(1+self.c)-self.c/(1+self.c)
         delta_c = 200./3*self.c**3/nfw_func
-        rho_s = delta_c*rho_c
+        rho_s = (delta_c*rho_c)
         l_s = 4*np.pi/3.*rho_s**2*self.r_s**3
-        
+
         return (1.-(1.+self.r200/self.r_s)**-3)*l_s
-        
-        #rho0 = self.Mvir / quad( lambda r: r**2 * 4 * np.pi * np.exp( (-2./0.17) * ( (r/r_s)**(0.17) - 1)), 0, self.r200)[0]
-        #return quad( lamba r: 4 * np.pi * rho0**2 * (np.exp( (-2./0.17) * ( (r/r_s)**(0.17) - 1) ) )**2, 0, self.r200 )[0]
-        ##return self.Mvir**2 * self.c**3/(12*np.pi*self.r200**3)*(1-1/(1+self.c)**3.)*(np.log(1+self.c)-self.c/(1+self.c))**(-2)
-        #return self.Mvir**2 * self.c**3/(12*np.pi*self.r200**3)*(7./8.)*(np.log(1+self.c)-self.c/(1+self.c))**(-2)
         
     def PPnoxsec(self, DMmass, ebins, channel, energy=False):
         dNdLogx_df = pd.read_csv('/tigress/somalwar/Subhaloes/Subhalos/Data/AtProduction_gammas.dat', delim_whitespace=True)
@@ -89,4 +83,4 @@ class PointSource():
         C2 = -85.16
         alpha1 = 0.012
         alpha2 = 0.0026
-        return (r/(260 * units.kpc))**(-alphaR) * ( C1*(M200/units.M_s)**(-alpha1) + C2*(M200/units.M_s)**(-alpha2))
+        return (r/(402 * units.kpc))**(-alphaR) * ( C1*(M200/units.M_s)**(-alpha1) + C2*(M200/units.M_s)**(-alpha2))

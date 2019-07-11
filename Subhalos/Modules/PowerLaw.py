@@ -6,12 +6,14 @@ def simple_power(F, fix_last, A, *args):
     N_b = int((len(args) - 1) / 2)
     n = -np.array(args[:N_b+1])
     Fb = np.array(args[N_b+1:])
+
     if not fix_last: 
         for i in range(len(Fb))[1:]:
             Fb[i] = Fb[i-1] - np.abs(Fb[i])
     else: 
         for i in reversed(range(len(Fb)-1)):
             Fb[i] = Fb[i+1] + np.abs(Fb[i])
+
     Fbv = np.array(Fb.copy())
     Fbv = np.concatenate(([Fbv[0]], Fbv))
     Fb = np.concatenate(([np.inf], Fb, [-np.inf]))

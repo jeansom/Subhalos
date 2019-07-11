@@ -17,7 +17,8 @@ def makeMockData(signal, *args):
     mockData = np.array(args[0])
     for arg in args[1:]:
         mockData += np.array(arg)
-    mockData = np.random.poisson(mockData)+signal
+    #mockData = np.random.poisson(mockData)+signal
+    mockData = np.random.poisson(mockData+signal)
     mockData = np.round(mockData).astype(np.int32)
     return mockData
 
@@ -29,32 +30,47 @@ def getNPTFitLL( data_ebins, exposure_ebins, mask, Nb, tag, bkg_temp_ebins, bkg_
     n_ebins = []
     for ib, data_arr in enumerate(data_ebins):
         n = nptfit.NPTF(tag=tag)
+        print( "Loading data and exposure" )
         n.load_data(data_arr, exposure_ebins[ib])
-        if ib==0: np.save("fake_data", data_arr)
+        print("Loading mask")
         n.load_mask(mask)
 
         for temp in bkg_temp_ebins[ib]:
-            n.add_template(copy.deepcopy(temp[0]), temp[1])
+            print( "Adding poissonian background: "+temp[1] )
+            n.add_template(copy.deepcopy(temp[0]), temp[1], units='counts')
             n.add_poiss_model(temp[1], 'A_\mathrm{'+temp[1]+'}$', [0,20], False)
-        n.add_template(copy.deepcopy(sub_temp), "subs")
+        print( "Adding signal template" )
+        n.add_template(copy.deepcopy(sub_temp), "subs", units='PS')
         
         for temp in bkg_temp_NP_ebins[ib]:
             if len(temp) == 0: continue
-            print( "adding subhalos" )
-            n.add_template(copy.deepcopy(temp[0]), temp[1])
+            print( "Adding and floating NP background" )
+            n.add_template(copy.deepcopy(temp[0]), temp[1], units='PS')
             n.add_non_poiss_model( temp[1], 
                                    ['$A^\mathrm{ps}_\mathrm{iso}$','$n_1$','$n_2$', '$n_3$', '$S_b1$', '$S_b2$'],
-                                   [[1e-20, 1e-2],[2.05, 20],[-20, 20],[0.1, 1.95],[0,30],[0,10]],
-                                   [False,False,False, False, False, False])
+                                   [[-10, -1],[2.05, 10],[-3, 3],[-10, 1.95],[0.1,100],[0.1,1]],
+                                   [True,False,False, False, False, False],
+                                      dnds_model='specify_relative_breaks')
+
         A0 = args[ib]
+        print(len(data_ebins)+(Nb+1)*ib, ib)
         n_arr = args[len(data_ebins)+(Nb+1)*ib:len(data_ebins)+Nb+1+(Nb+1)*ib]
         Fb_arr = args[len(data_ebins)*( 1 + (Nb+1) ) + (Nb)*ib:len(data_ebins)*( 1 + (Nb+1) ) + (Nb)*ib + Nb ]
+        print(A0, n_arr, Fb_arr)
         if len(n_arr) != len(Fb_arr)+1: 
             print( "Invalid source count distribution parameters!")
             return np.nan
-        if flux: A0, Fb_arr = SCDParams_Flux2Counts(A0, Fb_arr, mask, exposure_ebins[ib], sub_temp)
-        A0_ebins.append(A0)
-        Fb_arr_ebins.append(Fb_arr)
+        if flux: 
+            print( "Converting flux to source" )
+            A0, Fb_arr = SCDParams_Flux2Counts(A0, Fb_arr, mask, exposure_ebins[ib], sub_temp)
+
+        A0_ebins.append(10**A0)
+        Fb_arr = np.array(Fb_arr)
+        for iF, Fb in enumerate(Fb_arr):
+            if iF != 0:
+                Fb_arr[iF] = Fb_arr[iF-1]*Fb
+        Fb_arr_ebins.append(Fb_arr.copy())
+
         param_names = [ '$A_\mathrm{SCD}$' ]
         for ni in range(len(n_arr)):
             param_names.append( '$n_' + str(ni+1) + '$' )
@@ -63,23 +79,25 @@ def getNPTFitLL( data_ebins, exposure_ebins, mask, Nb, tag, bkg_temp_ebins, bkg_
         fixed_params = []
         for ni, n_val in enumerate(n_arr):
             fixed_params.append( [ni+1, n_val] )
+        print(fixed_params)
         if includeSig:
             if not floatSig: 
-                print( "adding fixed sig" )
+                print( "Fixing signal" )
                 n.add_non_poiss_model('subs',
                                       param_names,
-                                      fixed_params = fixed_params,
-                                      units='counts')
+                                      fixed_params = fixed_params)
             else:
-                print( "adding floated sig" )
+                print( "Floating signal" )
                 n.add_non_poiss_model( 'subs', 
-                                       ['$A^\mathrm{ps}_\mathrm{iso}$','$n_1$','$n_2$', '$n_3$', '$S_b1$', '$S_b2'],
-                                       [[1e-20, 1e-2],[2.05, 30],[-20, 20],[0.1, 1.95],[0,30],[0,10]],
-                                       [False,False,False, False, False, False])
+                                   ['$A^\mathrm{ps}_\mathrm{iso}$','$n_1$','$n_2$', '$n_3$', '$S_b1$', '$S_b2$'],
+                                       [[1e-10, 1e-1],[2.05, 10],[-3, 3],[-10, 1.95],[0.1,1000],[0.1,1000]],
+                                       [False,False,False, False, False, False] )
+#                                       dnds_model='specify_relative_breaks' )
 
         n.configure_for_scan()
         ll_ebins.append(n.ll)
         n_ebins.append(n)
+        print("Done!")
     return ll_ebins, A0_ebins, Fb_arr_ebins, n_ebins
 
 def SCDParams_Flux2Counts(A, Fb_arr, mask, exposure, sub_temp):
